@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.hazardousholdings</groupId>
+	<artifactId>jersey-mustache</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>jersey-mustache</name>
+	<description>Mustache support for JAX-RS</description>
+
+	<properties>
+		<jersey.version>1.12</jersey.version>
+		<mustache.version>0.7.2</mustache.version>
+		<guice.version>3.0</guice.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-server</artifactId>
+			<version>${jersey.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.spullara.mustache.java</groupId>
+			<artifactId>compiler</artifactId>
+			<version>${mustache.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>${guice.version}</version>
+		</dependency>
+	</dependencies>
+	
+</project>
