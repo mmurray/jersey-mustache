@@ -37,10 +37,10 @@ public class ClientsideTemplatesProvider implements Provider<String> {
 			sb.append(buildHtmlBlob(new File(basePath + '/' + s), ""));
 		}
 		sb.append("m.render = function(x, y) { return Mustache.render(t[x], y); }; ");
+		sb.append("m.setTemplate = function(x, y) { t[x] = y; }; ");
 		sb.append("})(mustache);");
 		sb.append("</script>");
 		this.htmlBlob = sb.toString();
-		System.out.println(this.htmlBlob);
 	}
 	
 	private String buildHtmlBlob(File dir, String namespace) {

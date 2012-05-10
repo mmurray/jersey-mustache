@@ -11,6 +11,7 @@ public class MustacheModule extends AbstractModule {
 	
 	private final List<String> clientsideDirs = Lists.newArrayList();
 	private String rootDir;
+	private boolean liveCompilation = true;
 	
 	protected void configureMustache() {}
 	
@@ -21,6 +22,10 @@ public class MustacheModule extends AbstractModule {
 	protected void addClientsideTemplateDirectory(String dir) {
 		clientsideDirs.add(dir);
 	}
+	
+	protected void setLiveCompilation(boolean live) {
+		liveCompilation = live;
+	}
 
 	@Override
 	protected void configure() {
@@ -28,7 +33,9 @@ public class MustacheModule extends AbstractModule {
 		if (rootDir == null) {
 			throw new RuntimeException("Must configure a template directory.");
 		}
-		bind(MustacheViewProcessor.class).toInstance(new MustacheViewProcessor(rootDir));
+		bind(MustacheViewProcessor.class)
+			// TODO request scoped if live?
+			.toInstance(new MustacheViewProcessor(rootDir, liveCompilation));
 		bind(String.class)
 			.annotatedWith(ClientsideTemplates.class)
 			.toProvider(new ClientsideTemplatesProvider(rootDir, clientsideDirs))

@@ -27,15 +27,17 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
     private final MustacheFactory mustacheFactory;
     private final Map<String, Mustache> compiledTemplates;
     private final String basePath;
+    private final boolean live;
     
     public MustacheViewProcessor() {
-    	this("");
+    	this("", true);
     }
     
-    public MustacheViewProcessor(String path) {
+    public MustacheViewProcessor(String path, boolean live) {
         mustacheFactory = new DefaultMustacheFactory();
         compiledTemplates = new HashMap<String, Mustache>();
         basePath = path;
+        this.live = live;
 
         precompileTemplates(new File(basePath));
     }
@@ -70,6 +72,9 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
 
 	public void writeTo(String resolvedPath, Viewable viewable, OutputStream out)
 			throws IOException {
+		if (live) {
+			precompileTemplates(new File(basePath));
+		}
 		compiledTemplates.get(resolvedPath).execute(new PrintWriter(out), viewable.getModel()).flush();
 	}
 
