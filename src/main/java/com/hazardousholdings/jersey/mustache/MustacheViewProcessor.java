@@ -4,9 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
@@ -24,22 +27,35 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
     public final static String MUSTACHE_TEMPLATES_BASE_PATH =
             "com.hazardousholdings.jersey.mustache.templateBasePath";
     
-    private final MustacheFactory mustacheFactory;
+    private DefaultMustacheFactory mustacheFactory;
+    private Writer writer;
     private final Map<String, Mustache> compiledTemplates;
     private final String basePath;
     private final boolean live;
+    private final ExecutorService executorService;
     
     public MustacheViewProcessor() {
     	this("", true);
     }
     
     public MustacheViewProcessor(String path, boolean live) {
-        mustacheFactory = new DefaultMustacheFactory();
+    	this(path, live, Executors.newCachedThreadPool());
+    }
+    
+    public MustacheViewProcessor(
+    		String path,
+    		boolean live,
+    		ExecutorService executorService) {
         compiledTemplates = new HashMap<String, Mustache>();
         basePath = path;
         this.live = live;
-
+        this.executorService = executorService;
         precompileTemplates(new File(basePath));
+    }
+   
+
+    public Writer getWriter() {
+    	return writer;
     }
     
     private void precompileTemplates(File dir) {
@@ -58,8 +74,11 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
     		}
     	} else if (dir.exists()) {
     		String key = namespace + dir.getName();
-    		Mustache m = mustacheFactory.compile(dir.getAbsolutePath());
+    		mustacheFactory = new DefaultMustacheFactory(new File(basePath));
+    		mustacheFactory.setExecutorService(executorService);
+    		Mustache m = mustacheFactory.compile(key);
     		compiledTemplates.put(key, m);
+    		System.out.println(key);
     	}
     }
 
@@ -75,7 +94,8 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
 		if (live) {
 			precompileTemplates(new File(basePath));
 		}
-		compiledTemplates.get(resolvedPath).execute(new PrintWriter(out), viewable.getModel()).flush();
+		writer = new PrintWriter(out);
+		compiledTemplates.get(resolvedPath).execute(writer, viewable.getModel()).flush();
 	}
 
 }

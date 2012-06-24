@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.github.mustachejava.Mustache;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.io.Files;
 import com.google.inject.Provider;
@@ -13,6 +14,7 @@ import com.google.inject.Provider;
 public class ClientsideTemplatesProvider implements Provider<String> {
 	
 	private final String htmlBlob;
+	private Function<String, String> preprocessor;
 	
 	//TODO: get this externally;
 	private final String mustacheJs = "var Mustache=\"undefined\"!==typeof module&&module.exports||{};" +
@@ -26,7 +28,8 @@ public class ClientsideTemplatesProvider implements Provider<String> {
 "a,i.line,c.file);}}}function B(a,c){c=c||{};return!1!==c.cache?(p[a]||(p[a]=A(a,c)),p[a]):A(a,c)}function r(a,c,d){return B(a)(c,d)}j.name=\"mustache.js\";j.version=\"0.5.0-dev\";j.tags=[\"{{\",\"}}\"];j.parse=z;j.compile=B;j.render=r;j.clearCache=function(){p={}};j.to_html=function(a,c,d,e){a=r(a,c,d);if(\"function\"===typeof e)e(a);else return a};var J=Object.prototype.toString,C=Array.isArray,E=Array.prototype.forEach,F=String.prototype.trim,q;q=C?C:function(a){return\"[object Array]\"===J.call(a)};var y;" +
 "y=E?function(a,c,d){return E.call(a,c,d)}:function(a,c,d){for(var e=0,b=a.length;e<b;++e)c.call(d,a[e],e,a)};var D=/^\\s*$/,o;if(F)o=function(a){return null==a?\"\":F.call(a)};else{var w,x;D.test(\"\\u00a0\")?(w=/^\\s+/,x=/\\s+$/):(w=/^[\\s\\xA0]+/,x=/[\\s\\xA0]+$/);o=function(a){return a==null?\"\":(\"\"+a).replace(w,\"\").replace(x,\"\")}}var H={\"&\":\"&amp;\",\"<\":\"&lt;\",\">\":\"&gt;\",'\"':\"&quot;\",\"'\":\"&#39;\"},p={}})(Mustache);";
 	
-	public ClientsideTemplatesProvider(String basePath, List<String> dirs) {
+	public ClientsideTemplatesProvider(String basePath, List<String> dirs, Function<String, String> preprocessor) {
+		this.preprocessor = preprocessor;
 		StringBuilder sb = new StringBuilder();
 		sb.append("<script type='text/javascript'>");
 		sb.append("var mustache = {};");
@@ -36,8 +39,8 @@ public class ClientsideTemplatesProvider implements Provider<String> {
 		for (String s : dirs) {
 			sb.append(buildHtmlBlob(new File(basePath + '/' + s), ""));
 		}
-		sb.append("m.render = function(x, y) { return Mustache.render(t[x], y); }; ");
-		sb.append("m.setTemplate = function(x, y) { t[x] = y; }; ");
+		sb.append("m.render = function(x, y) { return Mustache.render(t[x].template, y, t[x].partials); }; ");
+		sb.append("m.setTemplate = function(x, y) { t[x] = {template: y, partials: null}; }; ");
 		sb.append("})(mustache);");
 		sb.append("</script>");
 		this.htmlBlob = sb.toString();
@@ -57,7 +60,11 @@ public class ClientsideTemplatesProvider implements Provider<String> {
     	} else if (dir.exists()) {
     		try {
     			String key = namespace + dir.getName().replace(".html", "");
-    			return "t['" + key + "'] = '" + Joiner.on(' ').join(Files.readLines(dir, Charsets.UTF_8)) + "'; ";
+    			String template = Joiner.on(' ').join(Files.readLines(dir, Charsets.UTF_8));
+    			if (preprocessor != null) {
+    				template = preprocessor.apply(template);
+    			}
+    			return "t['" + key + "'] = {template: '" + template + "', partials: null}; ";
     		} catch (IOException e) {
     			throw new RuntimeException(e);
     		}
@@ -67,7 +74,6 @@ public class ClientsideTemplatesProvider implements Provider<String> {
 	}
 
 	public String get() {
-		System.out.println("providing "+htmlBlob);
 		return htmlBlob;
 	}
 
