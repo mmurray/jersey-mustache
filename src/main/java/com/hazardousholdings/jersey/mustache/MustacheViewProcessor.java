@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
 
@@ -45,7 +46,7 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
     public MustacheViewProcessor(
     		String path,
     		boolean live,
-    		ExecutorService executorService) {
+    		@Nullable ExecutorService executorService) {
         compiledTemplates = new HashMap<String, Mustache>();
         basePath = path;
         this.live = live;
@@ -75,7 +76,9 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
     	} else if (dir.exists()) {
     		String key = namespace + dir.getName();
     		mustacheFactory = new DefaultMustacheFactory(new File(basePath));
-    		mustacheFactory.setExecutorService(executorService);
+    		if (executorService != null) {
+    			mustacheFactory.setExecutorService(executorService);
+    		}
     		Mustache m = mustacheFactory.compile(key);
     		compiledTemplates.put(key, m);
     		System.out.println(key);
