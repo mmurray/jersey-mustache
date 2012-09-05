@@ -60,6 +60,9 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
     }
     
     private void precompileTemplates(File dir) {
+    	if (dir == null) {
+    		return;
+    	}
     	for (File f : dir.listFiles()) {
     		precompileTemplatesRecursively(f, "");
     	}
