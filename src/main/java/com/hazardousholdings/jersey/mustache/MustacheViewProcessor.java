@@ -51,7 +51,14 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
         basePath = path;
         this.live = live;
         this.executorService = executorService;
-        precompileTemplates(new File(basePath));
+        File baseFile = new File(basePath);
+        if (baseFile.exists()) {
+        	precompileTemplates(baseFile);
+        }
+        File root = new File(".");
+        for (File f : root.listFiles()) {
+        	System.out.println(f.getName());
+        }
     }
    
 
@@ -60,9 +67,6 @@ public class MustacheViewProcessor implements ViewProcessor<String> {
     }
     
     private void precompileTemplates(File dir) {
-    	if (dir == null) {
-    		return;
-    	}
     	for (File f : dir.listFiles()) {
     		precompileTemplatesRecursively(f, "");
     	}
